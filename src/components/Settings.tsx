@@ -5,9 +5,11 @@ import {
   Database, 
   Shield, 
   Bell,
-  Monitor,
-  Sliders
+  Trash2,
+  Download,
+  Upload
 } from 'lucide-react';
+import { clearAllData, loadUsersFromStorage } from '../utils/storage';
 import clsx from 'clsx';
 
 interface SettingsProps {
@@ -30,6 +32,24 @@ export const Settings: React.FC<SettingsProps> = ({ className }) => {
 
   const handleSave = () => {
     console.log('Settings saved:', settings);
+  };
+
+  const handleClearData = () => {
+    if (window.confirm('Are you sure you want to clear all user data? This action cannot be undone.')) {
+      clearAllData();
+      window.location.reload();
+    }
+  };
+
+  const handleExportData = () => {
+    const users = loadUsersFromStorage();
+    const dataStr = JSON.stringify(users, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'face-recognition-users.json';
+    link.click();
   };
 
   const SettingSection: React.FC<{
@@ -251,6 +271,42 @@ export const Settings: React.FC<SettingsProps> = ({ className }) => {
             className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded"
           />
         </SettingItem>
+      </SettingSection>
+
+      <SettingSection
+        title="Data Management"
+        description="Manage user data and system storage"
+        icon={<Database className="h-5 w-5 text-white" />}
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-white font-medium">Export User Data</label>
+              <p className="text-gray-400 text-sm">Download all registered users as JSON</p>
+            </div>
+            <button
+              onClick={handleExportData}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-sm transition-colors flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </button>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-white font-medium">Clear All Data</label>
+              <p className="text-gray-400 text-sm">Remove all users and recognition history</p>
+            </div>
+            <button
+              onClick={handleClearData}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white text-sm transition-colors flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Clear Data
+            </button>
+          </div>
+        </div>
       </SettingSection>
 
       <div className="flex justify-end">
