@@ -9,6 +9,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('camera');
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -43,9 +44,9 @@ function App() {
           </div>
         );
       case 'dashboard':
-        return <Dashboard className="p-6" />;
+        return <Dashboard key={refreshKey} className="p-6" />;
       case 'users':
-        return <Dashboard className="p-6" />;
+        return <Dashboard key={refreshKey} className="p-6" />;
       case 'settings':
         return <Settings className="p-6" />;
       default:
@@ -69,6 +70,7 @@ function App() {
         isOpen={isRegistrationOpen}
         onClose={() => setIsRegistrationOpen(false)}
         onSuccess={() => {
+          setRefreshKey(prev => prev + 1); // Force refresh of dashboard
           console.log('User registered successfully');
         }}
       />

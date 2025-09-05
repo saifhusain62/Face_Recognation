@@ -1,5 +1,6 @@
 import React from 'react';
 import { Camera, Users, BarChart3, Settings, UserPlus } from 'lucide-react';
+import { loadUsersFromStorage } from '../utils/storage';
 import clsx from 'clsx';
 
 interface NavigationProps {
@@ -13,6 +14,8 @@ export const Navigation: React.FC<NavigationProps> = ({
   onTabChange, 
   onRegisterUser 
 }) => {
+  const userCount = loadUsersFromStorage().length;
+  
   const navItems = [
     { id: 'camera', label: 'Live Camera', icon: Camera },
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -71,7 +74,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Database</span>
-              <span className="text-green-400">10k Users</span>
+              <span className="text-green-400">{userCount} Users</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Camera</span>

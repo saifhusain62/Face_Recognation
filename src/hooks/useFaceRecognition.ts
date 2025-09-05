@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { FaceData, DetectedFace } from '../types';
 import { loadFaceApiModels, detectFaces, matchFace } from '../utils/faceApi';
 import { generateMockFaceData } from '../data/mockData';
+import { saveUsersToStorage, loadUsersFromStorage } from '../utils/storage';
 
 export const useFaceRecognition = () => {
   const [isModelLoaded, setIsModelLoaded] = useState(false);
@@ -19,9 +20,15 @@ export const useFaceRecognition = () => {
         await loadFaceApiModels();
         setIsModelLoaded(true);
         
-        // Load mock face data
-        const mockData = generateMockFaceData();
-        setKnownFaces(mockData);
+        // Load existing users from storage, or generate mock data if none exist
+        const storedUsers = loadUsersFromStorage();
+        if (storedUsers.length > 0) {
+          setKnownFaces(storedUsers);
+        } else {
+          const mockData = generateMockFaceData();
+          setKnownFaces(mockData);
+          saveUsersToStorage(mockData);
+        }
         
         setError(null);
       } catch (err) {
@@ -125,17 +132,17 @@ export const useFaceRecognition = () => {
 
   const addNewFace = useCallback(async (name: string, email: string, imageFile: File): Promise<boolean> => {
     try {
+      // Create a permanent URL for the image by converting to base64
+      const imageUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.readAsDataURL(imageFile);
+      });
+      
       const img = new Image();
-      const imageUrl = URL.createObjectURL(imageFile);
       
       return new Promise((resolve) => {
         img.onload = async () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx?.drawImage(img, 0, 0);
-          
           try {
             const detections = await detectFaces(img);
             if (detections.length > 0) {
@@ -149,7 +156,11 @@ export const useFaceRecognition = () => {
                 recognitionCount: 0
               };
               
-              setKnownFaces(prev => [...prev, newFace]);
+              setKnownFaces(prev => {
+                const updated = [...prev, newFace];
+                saveUsersToStorage(updated);
+                return updated;
+              });
               resolve(true);
             } else {
               resolve(false);
@@ -160,6 +171,7 @@ export const useFaceRecognition = () => {
           }
         };
         
+        img.crossOrigin = 'anonymous';
         img.src = imageUrl;
       });
     } catch (error) {
@@ -179,6 +191,10 @@ export const useFaceRecognition = () => {
     startCamera,
     stopCamera,
     recognizeFaces,
-    addNewFace
+    addNewFace,
+    setKnownFaces: (faces: FaceData[]) => {
+      setKnownFaces(faces);
+      saveUsersToStorage(faces);
+    }
   };
 };

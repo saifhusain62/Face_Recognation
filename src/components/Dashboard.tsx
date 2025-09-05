@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { FaceData, Recognition, SystemStats } from '../types';
 import { generateMockFaceData, generateMockRecognitions } from '../data/mockData';
+import { loadUsersFromStorage, loadRecognitionsFromStorage } from '../utils/storage';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 
@@ -31,24 +32,39 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
   const [selectedTab, setSelectedTab] = useState<'overview' | 'users' | 'activity'>('overview');
 
   useEffect(() => {
-    const mockUsers = generateMockFaceData();
-    const mockRecognitions = generateMockRecognitions(mockUsers);
+    // Load real users from storage, fallback to mock data
+    const storedUsers = loadUsersFromStorage();
+    const storedRecognitions = loadRecognitionsFromStorage();
     
-    setUsers(mockUsers);
-    setRecognitions(mockRecognitions);
+    let finalUsers = storedUsers;
+    let finalRecognitions = storedRecognitions;
+    
+    // If no stored data, generate mock data
+    if (storedUsers.length === 0) {
+      finalUsers = generateMockFaceData();
+    }
+    
+    if (storedRecognitions.length === 0) {
+      finalRecognitions = generateMockRecognitions(finalUsers);
+    }
+    
+    setUsers(finalUsers);
+    setRecognitions(finalRecognitions);
     
     // Calculate stats
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const todayRecognitions = mockRecognitions.filter(r => r.timestamp >= today);
-    const avgConfidence = mockRecognitions.reduce((sum, r) => sum + r.confidence, 0) / mockRecognitions.length;
+    const todayRecognitions = finalRecognitions.filter(r => r.timestamp >= today);
+    const avgConfidence = finalRecognitions.length > 0 
+      ? finalRecognitions.reduce((sum, r) => sum + r.confidence, 0) / finalRecognitions.length 
+      : 0;
     
     setStats({
-      totalUsers: 10000, // Simulating 10k dataset
-      totalRecognitions: mockRecognitions.length * 50, // Scale up for demo
+      totalUsers: finalUsers.length,
+      totalRecognitions: finalRecognitions.length,
       averageConfidence: avgConfidence,
-      activeToday: todayRecognitions.length * 10
+      activeToday: todayRecognitions.length
     });
   }, []);
 

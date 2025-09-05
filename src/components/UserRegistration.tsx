@@ -41,6 +41,13 @@ export const UserRegistration: React.FC<UserRegistrationProps> = ({
       return;
     }
 
+    // Check if email already exists
+    const { knownFaces } = useFaceRecognition();
+    const emailExists = knownFaces.some(face => face.email.toLowerCase() === email.toLowerCase());
+    if (emailExists) {
+      setMessage({ type: 'error', text: 'Email already registered. Please use a different email.' });
+      return;
+    }
     setIsProcessing(true);
     setMessage(null);
 
@@ -49,10 +56,20 @@ export const UserRegistration: React.FC<UserRegistrationProps> = ({
       
       if (success) {
         setMessage({ type: 'success', text: 'User registered successfully!' });
+        
+        // Clear form after successful registration
+        setTimeout(() => {
+          setName('');
+          setEmail('');
+          setImageFile(null);
+          setPreviewUrl(null);
+          setMessage(null);
+        }, 1000);
+        
         setTimeout(() => {
           onSuccess();
           handleClose();
-        }, 1500);
+        }, 2000);
       } else {
         setMessage({ type: 'error', text: 'No face detected in the image. Please try another photo.' });
       }
